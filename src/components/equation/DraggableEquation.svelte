@@ -124,7 +124,6 @@
             if (out[3]) {
                 vel.x += d / 300;
             }
-            console.log(vel);
             
             if (out.every(c => c) && dRect) {
                 vel.x -= x * 0.0015;
