@@ -1,4 +1,4 @@
-import LiveUpdate from './LiveUpdate.svelte';
+import App from './App.svelte';
 // import './base.js';
 // import './ctat.min.js';
 
@@ -17,7 +17,7 @@ import LiveUpdate from './LiveUpdate.svelte';
 // console.log(a);
 window.drag = {}
 window.drop = {}
-var app = new LiveUpdate({
+var app = new App({
 	target: document.body
 });
 

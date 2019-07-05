@@ -21,11 +21,7 @@
     let dRect;
 
     window.addEventListener("message", event => {
-        console.log(1);
-        
-        if (event.origin === window.location.origin)
-            return;
-        if (event.data.command === "dragEqn") {
+        if (event.data.command === "dragEqn" && event.data.player !== player) {
             coords = event.data.coords;
             curPlayer = event.data.player;
             if (event.data.vel)
@@ -63,8 +59,8 @@
             {x: dRect.x + dRect.width / 2, y: dRect.y + dRect.height},
             {x: dRect.x, y: dRect.y + dRect.height / 2}];
         corners.forEach((corner, i) => {
-            screenRects.forEach((screen, j) => {
-                if (pointInRect(corner, screen)) {
+            screenRects.forEach((screen, j) => {                
+                if (screen && pointInRect(corner, screen)) {
                     cornerFlags[i] = j;
                 }
             })
@@ -77,9 +73,9 @@
 		const time = window.performance.now();
 		const delta = time - last_time;
         if (dragging) {
-            if (frame % 10 === 0) {
+            if (frame % 4 === 0) {
                 let prev = prevList[prevList.length - 1];
-                if (cornerFlags.some(f => f > -1 && f !== player) && prev && (Math.floor(prev.x) !== Math.floor(coords.x) || Math.floor(prev.y) !== Math.floor(coords.y))) {
+                if (cornerFlags.some(f => f > -1 && f !== player) && prev && (~~(prev.x) !== ~~(coords.x) || ~~(prev.y) !== ~~(coords.y))) {
                     parent.postMessage({command: "dragEqn", coords: coords, player: player}, window.location.origin);
                 }
             }
@@ -97,10 +93,10 @@
                 coords.y += vel.y * delta * 0.15;
                 vel.x = lerp(vel.x, 0, 0.01 * delta);
                 vel.y = lerp(vel.y, 0, 0.01 * delta);
-                if (Math.abs(vel.x) < 0.25) {
+                if (Math.abs(vel.x) < 0.15) {
                     vel.x = 0;
                 }
-                if (Math.abs(vel.y) < 0.25) {
+                if (Math.abs(vel.y) < 0.15) {
                     vel.y = 0;
                 }
                 
@@ -113,24 +109,26 @@
             }
             
             let out = [cornerFlags[0] < 0, cornerFlags[1] < 0, cornerFlags[2] < 0, cornerFlags[3] < 0];
+            let x = dRect ? dRect.x - (screenRects[curPlayer].x + screenRects[curPlayer].width / 2) : 1;
+            let y = dRect ? dRect.y - (screenRects[curPlayer].y + screenRects[curPlayer].height / 2) : 1;
+            let d = Math.sqrt(x * x + y * y);
             if (out[0]) {
-                vel.y += 0.3;
+                vel.y += d / 300;
             }
             if (out[1]) {
-                vel.x -= 0.3;
+                vel.x -= d / 300;
             }
             if (out[2]) {
-                vel.y -= 0.3;
+                vel.y -= d / 300;
             }
             if (out[3]) {
-                vel.x += 0.3;
+                vel.x += d / 300;
             }
+            console.log(vel);
+            
             if (out.every(c => c) && dRect) {
-                let x = dRect.x - (screenRects[curPlayer].x + screenRects[curPlayer].width / 2);
-                let y = dRect.y - (screenRects[curPlayer].y + screenRects[curPlayer].height / 2);
-                let d = Math.sqrt(x * x + y * y);
-                vel.x -= x / d * 0.3;
-                vel.y -= y / d * 0.3;
+                vel.x -= x * 0.0015;
+                vel.y -= y * 0.0015;
             }
         }
 
