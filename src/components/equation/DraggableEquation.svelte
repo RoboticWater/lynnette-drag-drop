@@ -182,6 +182,8 @@
     .corner {
         background: #3be96f;
         line-height: 100px;
+        text-align: center;
+        font-size: 30px;
     }
     .one {
         grid-area: one;
