@@ -30,7 +30,7 @@
 		display: flex;
 		position: fixed;
 		bottom: 15px;
-		right: 20px;
+		left: 20px;
 		font-size: 20px;
 		z-index: 1000;
 	}

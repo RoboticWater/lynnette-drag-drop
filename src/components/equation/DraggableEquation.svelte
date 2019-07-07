@@ -126,8 +126,10 @@
             }
             
             if (out.every(c => c) && dRect) {
-                vel.x -= x * 0.0015;
-                vel.y -= y * 0.0015;
+                let vx = x * 0.0015;                
+                let vy = y * 0.0015;                
+                vel.x -= Math.abs(vx) > 5 ? 5 * Math.sign(vx) : vx;
+                vel.y -= Math.abs(vy) > 5 ? 5 * Math.sign(vy) : vy;
             }
         }
 

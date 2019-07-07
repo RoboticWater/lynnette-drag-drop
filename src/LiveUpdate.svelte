@@ -2,13 +2,13 @@
     import DraggableEquation from './components/equation/DraggableEquation.svelte';
     import { onMount, afterUpdate } from 'svelte'
 
-    let user = CTATConfiguration.getSingleParameterValues(['user_guid']);
+    let user = CTATConfiguration.getSingleParameterValues(['user_guid'])[0];
     
     let player = 0;
     let screens = [null, null, null, null]
     let screenRects = [null, null, null, null]
-    let offsetX = player % 2 === 0 ? "100vw" : "0";
-    let offsetY = ~~(player / 2) === 0 ? "0" : "100vh";
+    $: offsetX = player % 2 === 0 ? "100vw" : "0";
+    $: offsetY = ~~(player / 2) === 0 ? "0" : "100vh";
 
     let updateRect = -1;
 
@@ -16,10 +16,10 @@
         screenRects[0] = {x: 0, y: 0, top: 0, left: 0, width: parent.innerWidth, height: parent.innerHeight};
     });
 
-    window.addEventListener("message", event => {
-        if (event.data.command === "tutorready" && event.data.from !== user) {
-            console.log(event);
+    window.addEventListener("message", event => {        
+        if (event.data.command === "tutorready" && event.data.from === user) {
             player = event.data.team_count - 1;
+            
             // updateRect = player;
             screenRects[player] = {x: 0, y: 0, top: 0, left: 0, width: parent.innerWidth, height: parent.innerHeight};
             parent.postMessage({command: "playerJoin", rect: {width: parent.innerWidth, height: parent.innerHeight}, player: player}, window.location.origin);
