@@ -1,7 +1,6 @@
 export function draggableEqn(node) {
 	let x = 0;
 	let y = 0;
-	let prevList = []
 
 	let offset;
 	let start;
@@ -15,18 +14,10 @@ export function draggableEqn(node) {
 			return;
 		// x = event.clientX;
 		// y = event.clientY;
-
-		prevList = [];
-		for (let i = 0; i < 5; i++) {
-			prevList.push({x: 0, y: 0});
-		}
 		var style = window.getComputedStyle(node);
 		var matrix = new WebKitCSSMatrix(style.webkitTransform);
 		start = {x: matrix.m41, y: matrix.m42}
 		offset = { x: event.clientX, y: event.clientY }
-		
-		prevList.push({x: event.movementX, y: event.movementY});
-		prevList.shift();
 
 
 		node.dispatchEvent(new CustomEvent('dragstart'));
@@ -40,31 +31,17 @@ export function draggableEqn(node) {
 	function handleMousemove(event) {
 		x = event.clientX - offset.x + start.x;
 		y = event.clientY - offset.y + start.y;
-		prevList.push({x: event.movementX, y: event.movementY});
-		prevList.shift();
 		node.dispatchEvent(new CustomEvent('dragmove', {
 			detail: { x: x , y: y }
 		}));
 	}
-
-	function avg() {
-		let ax = 0;
-		let ay = 0;
-		for (let i = 0; i < prevList.length; i++) {
-			ax += prevList[i].x;
-			ay += prevList[i].y;
-		}
-		return {x: ax / prevList.length, y: ay / prevList.length}
-	}
-
 	function handleMouseup(event) {
         event.stopPropagation();
 		x = event.clientX - offset.x + start.x;
 		y = event.clientY - offset.y + start.y;
-		let a = avg();
 		
 		node.dispatchEvent(new CustomEvent('dragend', {
-			detail: { x: x - offset.x, y: y - offset.y, dx: a.x, dy: a.y }
+			detail: { x: x - offset.x, y: y - offset.y }
 		}));
 
 		window.removeEventListener('mousemove', handleMousemove);
@@ -104,8 +81,6 @@ export function draggableEqn(node) {
 		let curEvent = Object.values(event.touches).find(t => t.identifier === touchIndex);
 		x = curEvent.clientX - offset.x + start.x;
 		y = curEvent.clientY - offset.y + start.y;
-		prevList.push({x: x - px, y: y - py});
-		prevList.shift();
 		node.dispatchEvent(new CustomEvent('dragmove', {
 			detail: { x: x , y: y }
 		}));
