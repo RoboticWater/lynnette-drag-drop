@@ -3,10 +3,9 @@
 	import RequestAndSend from './RequestAndSend.svelte'
 	import DragDrop from './DragDrop.svelte'
 
-	let tab = 0;
+	let tab = 1;
 </script>
 
-<div class="hider" class:visible={split} class:right={collabID === 2}/>
 <div class="root">
 	<div class="tabs">
 		<button on:click={() => tab = 0}>Collab Live</button>
