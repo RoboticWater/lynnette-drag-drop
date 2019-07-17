@@ -1,6 +1,6 @@
 // import App from './App.svelte';
-import LiveUpdate from './LiveUpdate.svelte';
-// import RequestAndSend from './RequestAndSend.svelte';
+// import LiveUpdate from './LiveUpdate.svelte';
+import RequestAndSend from './RequestAndSend.svelte';
 // import './base.js';
 // import './ctat.min.js';
 
@@ -19,7 +19,7 @@ import LiveUpdate from './LiveUpdate.svelte';
 // console.log(a);
 window.drag = {}
 window.drop = {}
-var app = new LiveUpdate({
+var app = new RequestAndSend({
 	target: document.body
 });
 

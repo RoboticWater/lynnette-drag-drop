@@ -1,60 +1,45 @@
 <script>
 	import History from './components/History.svelte';
+	import Waiting from './components/WaitingScreen.svelte';
+	import Collaborator from './components/Collaborator.svelte';
+	import Notification from './components/RequestNotification.svelte';
     import { history } from './stores/history.js';
-    import { elasticOut } from 'svelte/easing';
     import { produce } from 'immer';
 
+    // let user = "test";
+    // let collaborators = "test,reallylongname,test2".split(',').map(user => ({name: user, requesting: false}));
     let user = CTATConfiguration.get('user_guid');
+    let collaborators = CTATConfiguration.get('collaborators').split(',').map(user => ({name: user, requesting: false}));
+    let index = collaborators.findIndex(c => c.name === user)
+    let team_count = 3;
+    let hasEquation = 0;
     
-    let collaborators = [];
-    let hasEquation = null;
-
-    function grow(node, { duration }) {
-		return {
-			duration,
-			css: t => {
-				const eased = elasticOut(t);
-				return `
-                    transform: scale(${eased});
-                    opacity: ${eased}`
-			}
-		};
-	}
 
     window.addEventListener("message", event => {
-        if (event.data.command === "tutorready") {
-            if (event.data.username !== user && !collaborators.some(c => c.name === event.data.username)) {
-                collaborators = [...collaborators, {
-                    name: event.data.from,
-                    requesting: false,
-                }];
-                parent.postMessage({command: "addUser", username: user}, window.location.origin); //TODO this should be a check I can do with the tutor, not this feedback loop of readying
-            } else {
-                hasEquation = event.data.team_count === 1 ? -1 : 0; //TODO this should also be handled with states and SAIs
-            }
-        }
-        if (event.data.command === "addUser" && event.data.from !== user) {
-            collaborators = [...collaborators, {
-                name: event.data.from,
-                requesting: false,
-            }];
-        }
-        if (event.data.command === "sendEquation" && event.data.from !== user && event.data.to === user) {
-            hasEquation = -1;
-        }
-        if (event.data.command === "requestEquation" && event.data.from !== user) {
-            handleIncomingRequest(event.data.from);
+        switch (event.data.command) {
+            case "tutorready":
+                team_count = event.data.team_count;
+                break;
+            case "sendEquation":
+                hasEquation = collaborators.findIndex(c => event.data.to === c.name);
+                break;
+            case "requestEquation":
+                if (event.data.from !== user) {
+                    handleIncomingRequest(event.data.from);
+                }
+                break;
+            default:
+                break;
         }
     })
 
-    function handleCollaboratorClick(event, index) {
-        if (hasEquation !== -1)
+    function handleCollaboratorClick(event, i) {
+        if (hasEquation !== index)
             return;
-        hasEquation = index;
         collaborators = produce(collaborators, draft => {
-            draft[index].requesting = false;
+            draft[i].requesting = false;
         });
-        parent.postMessage({command: "sendEquation", to: collaborators[index].name}, window.location.origin);
+        parent.postMessage({command: "sendEquation", to: collaborators[i].name}, window.location.origin);
     }
     function handleRequestEquation(event) {
         if (hasEquation !== -1)
@@ -79,15 +64,17 @@
 </script>
 
 <div class="root">
+    {#if team_count < collaborators.length} 
+        <Waiting/>
+    {/if}
     <div class="collaborators">
         {#each collaborators as collaborator, i}
-            <div class="collaborator"
-                class:requesting={collaborator.requesting && hasEquation === -1}
-                class:has-equation={hasEquation === i}
-                in:grow="{{duration: 600}}" out:grow
-                on:click={e => handleCollaboratorClick(e, i)}>
-                <span>{collaborator.name}</span>
-            </div>
+            {#if collaborator.name !== user}
+                <Collaborator {...collaborator}
+                    onClick={e => handleCollaboratorClick(e, i)}
+                    hasEquation={hasEquation === i}
+                    canGiveEquation={hasEquation === index}/>
+            {/if}
         {/each}
     </div>
     {user}
@@ -99,11 +86,18 @@
 		<History></History>
     </div>
     <div class="equation-area">
-        <div class="equation" class:visible={hasEquation === -1}>
+        <div class="equation" class:visible={hasEquation === index}>
         </div>
     </div>
-    <div class="request">
+    <div class="request-button">
         <button on:click={handleRequestEquation}>Request Equation</button>
+    </div>
+    <div class="requests">
+        {#each collaborators as request, i}
+            {#if request.requesting}
+                <Notification name={request.name} onClick={e => handleCollaboratorClick(e, i)} />
+            {/if}
+        {/each}
     </div>
 </div>
 
@@ -141,46 +135,7 @@
         align-self: center;
         justify-self: center;
     }
-    .collaborator {
-        margin: 20px;
-        width: 66px;
-        height: 66px;
-        border-radius: 100%;
-        background: #55ee88;
-        border: 0 #ffef5b solid;
-        transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease;
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 20px;
-        cursor: pointer;
-        user-select: none;
-        box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        -webkit-box-sizing: border-box;
-    }
-    .collaborator:hover {
-        transform: scale(1.2);
-        background: #96fab7;
-    }
-    .collaborator.requesting {
-        transform: scale(1.4);
-        border-width: 5px;
-    }
-    .collaborator.requesting:hover {
-        transform: scale(1.6);
-    }
-    .collaborator:active {
-        transform: scale(0.9);
-    }
-    .collaborator.requesting:active {
-        transform: scale(1.2);
-    }
-    .collaborator.has-equation {
-        border: 5px #48adff solid;
-    }
-    .request {
+    .request-button {
         grid-area: request;
         align-self: center;
         justify-self: center;
@@ -189,5 +144,14 @@
     .history {
         grid-area: history;
         padding: 10px;
+    }
+    .requests {
+        position: fixed;
+        overflow: hidden;
+        top: 10%;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events:none;    
     }
 </style>
